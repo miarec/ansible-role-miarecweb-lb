@@ -1,0 +1,44 @@
+---
+haproxy_socket: /var/lib/haproxy/stats
+haproxy_chroot: /var/lib/haproxy
+haproxy_user: haproxy
+haproxy_group: haproxy
+
+# Location to store SSL certificates on the server
+haproxy_ssl_cert_remote_dir: /etc/ssl/private
+
+# Location of SSL certificate file on Ansible controller
+# The file will be copied to the server's SSL directory
+haproxy_ssl_cert_local_file: ""
+
+
+# Extra global vars (see README for example usage).
+haproxy_global_vars: []
+
+haproxy_ssl_default_bind_ciphers: ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS
+haproxy_ssl_default_bind_options: no-sslv3 no-tlsv10
+
+haproxy_backend_name: miarec_backend
+haproxy_frontend_name: miarec_frontend
+haproxy_backend_httpchk: /login
+
+# A list of backend servers
+# Example:
+#   haproxy_backend_servers:
+#     - name: web1
+#       address: 10.0.0.1:443
+#       backup: False
+#     - name: web2
+#       address: 10.0.0.2:443
+#       backup: True
+haproxy_backend_servers: 
+
+haproxy_defaults_timeout:
+  - type: connect
+    timeout: 5000
+  - type: client
+    timeout: 50000
+  - type: server
+    timeout: 50000
+
+haproxy_defaults_errorfile: False

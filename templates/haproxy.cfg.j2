@@ -1,0 +1,81 @@
+# {{ ansible_managed }}
+
+# -----------------------------------------------------------
+# Global settings
+# -----------------------------------------------------------
+global
+  log /dev/log  local0
+  log /dev/log  local1 notice
+{% if haproxy_socket != '' %}
+  stats socket {{ haproxy_socket }} level admin
+{% endif %}
+{% if haproxy_chroot != '' %}
+  chroot {{ haproxy_chroot }}
+{% endif %}
+  user {{ haproxy_user }}
+  group {{ haproxy_group }}
+  daemon
+  ssl-default-bind-options {{ haproxy_ssl_default_bind_options }}
+  ssl-default-bind-ciphers {{ haproxy_ssl_default_bind_ciphers }}
+  # ssl-dh-param-file /etc/haproxy/dhparams.pem
+  tune.ssl.default-dh-param 2048
+
+{% for global_var in haproxy_global_vars %}
+  {{ global_var }}
+{% endfor %}
+
+
+# -----------------------------------------------------------
+# Default settings
+# -----------------------------------------------------------
+defaults
+  log global
+  mode  http
+  option  httplog
+  option  dontlognull
+
+{% if haproxy_defaults_timeout != false %}
+{% for timeout in haproxy_defaults_timeout %}
+  timeout {{ timeout.type }} {{ timeout.timeout }}
+{% endfor %}
+{% endif %}
+
+{% if haproxy_defaults_errorfile != false %}
+{% for errorfile in haproxy_defaults_errorfile %}
+  errorfile {{ errorfile.code }} {{ errorfile.file }}
+{% endfor %}
+{% endif %}
+
+
+# -----------------------------------------------------------
+# Frontend
+# -----------------------------------------------------------
+frontend {{ haproxy_frontend_name }}
+    mode http
+    bind *:80
+{% if haproxy_ssl_cert_local_file != '' %}
+    bind *:443 ssl crt {{ haproxy_ssl_cert_remote_dir }}/{{ haproxy_ssl_cert_local_file | basename }}
+
+    # Redirect if HTTPS is *not* used
+    redirect scheme https code 301 if !{ ssl_fc }
+
+    reqadd X-Forwarded-Proto:\ https
+    reqadd X-Forwarded-Port:\ 443
+    rspadd  Strict-Transport-Security:\ max-age=15768000
+{% endif %}
+
+    default_backend {{ haproxy_backend_name }}
+
+# -----------------------------------------------------------
+# Backend
+# -----------------------------------------------------------
+backend {{ haproxy_backend_name }}
+    mode http
+    balance roundrobin
+    option forwardfor
+{% if haproxy_backend_httpchk != '' %}
+    option httpchk {{ haproxy_backend_httpchk }}
+{% endif %}
+{% for backend in haproxy_backend_servers %}
+    server {{ backend.name }} {{ backend.address }} check on-error mark-down observe layer7 error-limit 10 ssl verify none {{ backend.backup | ternary('backup', '') }}
+{% endfor %}

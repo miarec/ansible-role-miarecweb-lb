@@ -1,0 +1,44 @@
+---
+- name: Ensure HAProxy is installed.
+  package: 
+    name: haproxy
+    state: present
+
+- name: Create directory for SSL certificates
+  file:
+    path: "{{ haproxy_ssl_cert_remote_dir }}"
+    state: directory
+  when: haproxy_ssl_cert_local_file
+
+- name: Copy SSL certificate
+  copy:
+    src: "{{ haproxy_ssl_cert_local_file }}"
+    dest: "{{ haproxy_ssl_cert_remote_dir }}/{{ haproxy_ssl_cert_local_file | basename}}"
+    owner: "{{ haproxy_user }}"
+    group: "{{ haproxy_group }}"
+    mode: 0640
+  notify: reload haproxy
+  when: haproxy_ssl_cert_local_file
+
+- name: Generate custom DH parameters
+  command: openssl dhparam -out /etc/haproxy/dhparams.pem 2048
+  args:
+    creates: "/etc/haproxy/dhparams.pem"
+  notify: reload haproxy
+  
+- name: Copy HAProxy configuration in place.
+  template:
+    src: haproxy.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    owner: "{{ haproxy_user }}"
+    group: "{{ haproxy_group }}"
+    mode: 0640
+    validate: haproxy -f %s -c -q
+  notify: reload haproxy
+
+
+- name: Ensure HAProxy is started and enabled on boot.
+  service: 
+    name: haproxy 
+    state: started 
+    enabled: yes
