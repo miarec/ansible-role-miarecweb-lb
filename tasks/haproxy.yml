@@ -8,7 +8,7 @@
   file:
     path: "{{ haproxy_ssl_cert_remote_dir }}"
     state: directory
-  when: haproxy_ssl_cert_local_file
+  when: haproxy_ssl_cert_local_file | length != 0
 
 - name: Copy SSL certificate
   copy:
@@ -18,7 +18,7 @@
     group: "{{ haproxy_group }}"
     mode: 0640
   notify: reload haproxy
-  when: haproxy_ssl_cert_local_file
+  when: haproxy_ssl_cert_local_file | length != 0
 
 - name: Generate custom DH parameters
   command: openssl dhparam -out /etc/haproxy/dhparams.pem 2048
