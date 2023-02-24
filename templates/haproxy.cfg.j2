@@ -48,9 +48,9 @@ defaults
 
 
 # -----------------------------------------------------------
-# Frontend
+# Web Frontend
 # -----------------------------------------------------------
-frontend {{ haproxy_frontend_name }}
+frontend {{ haproxy_web_frontend_name }}
     mode http
     bind *:80
 {% if haproxy_ssl_cert_local_file != '' %}
@@ -64,18 +64,39 @@ frontend {{ haproxy_frontend_name }}
     rspadd  Strict-Transport-Security:\ max-age=15768000
 {% endif %}
 
-    default_backend {{ haproxy_backend_name }}
+    default_backend {{ haproxy_web_backend_name }}
 
 # -----------------------------------------------------------
-# Backend
+# Web Backend
 # -----------------------------------------------------------
-backend {{ haproxy_backend_name }}
+backend {{ haproxy_web_backend_name }}
     mode http
     balance roundrobin
     option forwardfor
-{% if haproxy_backend_httpchk != '' %}
-    option httpchk {{ haproxy_backend_httpchk }}
+{% if haproxy_web_backend_httpchk != '' %}
+    option httpchk {{ haproxy_web_backend_httpchk }}
 {% endif %}
-{% for backend in haproxy_backend_servers %}
+{% for backend in haproxy_web_backend_servers %}
     server {{ backend.name }} {{ backend.address }} check on-error mark-down observe layer7 error-limit 10 ssl verify none {{ backend.backup | ternary('backup', '') }}
+{% endfor %}
+
+
+# -----------------------------------------------------------
+# Screen Frontend
+# -----------------------------------------------------------
+frontend {{ haproxy_screen_frontend_name }}
+    mode tcp
+    bind *:6092
+
+    default_backend {{ haproxy_screen_backend_name }}
+
+
+# -----------------------------------------------------------
+# Screen Backend
+# -----------------------------------------------------------
+backend {{ haproxy_screen_backend_name }}
+    mode tcp
+    balance roundrobin
+{% for backend in haproxy_screen_backend_servers %}
+    server {{ backend.name }} {{ backend.address }} check
 {% endfor %}

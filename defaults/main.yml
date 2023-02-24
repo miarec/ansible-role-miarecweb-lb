@@ -18,20 +18,35 @@ haproxy_global_vars: []
 haproxy_ssl_default_bind_ciphers: ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS
 haproxy_ssl_default_bind_options: no-sslv3 no-tlsv10
 
-haproxy_backend_name: miarec_backend
-haproxy_frontend_name: miarec_frontend
-haproxy_backend_httpchk: /login
+haproxy_web_frontend_name: miarec_web_frontend
+haproxy_web_backend_name: miarec_web_backend
+
+haproxy_web_backend_httpchk: /login
 
 # A list of backend servers
 # Example:
-#   haproxy_backend_servers:
+#   haproxy_web_backend_servers:
 #     - name: web1
 #       address: 10.0.0.1:443
 #       backup: False
 #     - name: web2
 #       address: 10.0.0.2:443
 #       backup: True
-haproxy_backend_servers: 
+haproxy_web_backend_servers: 
+
+haproxy_screen_frontend_name: miarec_screen_frontend
+haproxy_screen_backend_name: miarec_screen_backend
+
+# A list of backend servers
+# Example:
+#   haproxy_screen_backend_servers:
+#     - name: screen1
+#       address: 10.0.0.1:6092
+#       backup: False
+#     - name: web2
+#       address: 10.0.0.2:6092
+#       backup: True
+haproxy_screen_backend_servers: 
 
 haproxy_defaults_timeout:
   - type: connect
